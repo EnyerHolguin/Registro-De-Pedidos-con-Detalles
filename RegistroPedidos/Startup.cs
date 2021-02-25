@@ -2,9 +2,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using RegistroPedidos.BLL;
+using RegistroPedidos.DAL;
 using RegistroPedidos.Data;
 using System;
 using System.Collections.Generic;
@@ -29,6 +32,14 @@ namespace RegistroPedidos
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
+            services.AddDbContext<Contexto>(options =>
+                        options.UseSqlite(Configuration.GetConnectionString("DefaultConnection"))
+
+                       );
+           
+            services.AddTransient<ProductosBLL>();
+            services.AddTransient<SuplidoresBLL>();
+            services.AddTransient<OrdenesBLL>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -5,11 +5,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="DAL\" />
-    <Folder Include="BLL\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameWorkCore.SqLite" Version="5.0.3" />
     <PackageReference Include="Microsoft.EntityFrameWorkCore.Tools" Version="5.0.3">
       <PrivateAssets>all</PrivateAssets>
