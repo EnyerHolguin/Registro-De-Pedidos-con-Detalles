@@ -67,7 +67,12 @@ namespace RegistroPedidos.BLL
 
             try
             {
-                Detached(ordenes.OrdenId);
+                _contexto.Database.ExecuteSqlRaw($"DELETE FROM OrdenesDetalle WHERE OrdenId={ordenes.OrdenId}");
+                foreach (var item in ordenes.Detalle)
+                {
+                    _contexto.Entry(item).State = EntityState.Added;
+                }
+
                 _contexto.Entry(ordenes).State = EntityState.Modified;
                 ok = await _contexto.SaveChangesAsync() > 0;
             }
@@ -78,7 +83,6 @@ namespace RegistroPedidos.BLL
             }
 
             return ok;
-
         }
 
         public async Task<Ordenes> Buscar(int id)
@@ -89,6 +93,8 @@ namespace RegistroPedidos.BLL
             {
                 ordenes = await _contexto.Ordenes
                     .Where(s => s.OrdenId == id)
+                    .Include(s => s.Detalle)
+                    .ThenInclude(s => s.Producto)
                     .AsNoTracking()
                     .SingleOrDefaultAsync();
             }
@@ -109,7 +115,7 @@ namespace RegistroPedidos.BLL
                 var registro = await _contexto.Ordenes.FindAsync(id);
                 if (registro != null)
                 {
-                    _contexto.Entry(registro).State = EntityState.Deleted;
+                    _contexto.Ordenes.Remove(registro);
                     ok = await _contexto.SaveChangesAsync() > 0;
                 }
             }
@@ -137,17 +143,6 @@ namespace RegistroPedidos.BLL
             }
 
             return lista;
-        }
-
-        private void Detached(int ordenesId)
-        {
-            var aux = _contexto
-                .Set<Ordenes>()
-                .Local
-                .FirstOrDefault(s => s.OrdenId == ordenesId);
-
-            if (aux != null)
-                _contexto.Entry(aux).State = EntityState.Detached;
         }
 
     }
