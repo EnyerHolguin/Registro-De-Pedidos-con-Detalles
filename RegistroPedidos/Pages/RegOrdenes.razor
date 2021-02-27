@@ -54,11 +54,10 @@
         <div class="card-header bg-info">
             <h5 class="text-white">Orden Detalle</h5>
         </div>
-        <div class="card-body">
 
             <div class="col form-group">
                 <label>Costo</label>
-                <InputNumber @bind-Value="producto.Costo" class="form-control  col-4" readonly />
+                <InputNumber @bind-Value="producto.Costo" class="form-control  col-4"  />
 
             </div>
 
@@ -117,7 +116,7 @@
             </div>
         </div>
 
-    </div> 
+    
 </EditForm>
 
 @code {
@@ -170,9 +169,7 @@
         Orden.Monto += total;
         detalle.Costo = producto.Costo;
         Orden.Detalle.Add(detalle);
-
         SourceDTO(detalle, producto);
-
         total = 0;
         detalle = new OrdenesDetalle();
         producto = new Productos();
