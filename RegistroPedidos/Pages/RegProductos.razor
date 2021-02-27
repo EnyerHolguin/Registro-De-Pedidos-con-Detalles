@@ -1,0 +1,134 @@
+﻿@using RegistroPedidos.BLL;
+@using RegistroPedidos.Models;
+@page "/Productos"
+@page "/Productos/{ProductoId:int}"
+
+<EditForm Model="Producto" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="card">
+        <div class="card-header">
+            <h3>Registro Productos</h3>
+        </div>
+
+        <div class="card-body">
+            <form>
+           
+                <div class="form-row align-items-center">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Producto Id</label>
+                            <div class="input-group">
+                                <InputNumber @bind-Value="this.ProductoId" class="form-control col-3" />
+                                <div class="input-group-append">
+                                    <button type="button" style="z-index:0" class="btn btn-primary input-group-text" @onclick="Buscar">Buscar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <InputText @bind-Value="Producto.Descripcion" class="form-control col-4" />
+                    <ValidationMessage For="(() => Producto.Descripcion)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Costo</label>
+                    <InputNumber @bind-Value="Producto.Costo" class="form-control col-4" />
+                    <ValidationMessage For="(() => Producto.Costo)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Inventario</label>
+                    <InputNumber @bind-Value="Producto.Inventario" readonly class="form-control col-4" />
+                    <ValidationMessage For="(() => Producto.Inventario)" />
+                </div>
+
+            </form>
+
+        </div>
+        <h3>@Mensaje</h3>
+
+        <div class="card-footer">
+            <div class="form-group text-center">
+                <button type="button" class="btn btn-primary" @onclick="Nuevo">Nuevo</button>
+                <button type="submit" class="btn btn-success">Guardar</button>
+                <button type="button" class="btn btn-danger" @onclick="Eliminar">Eliminar</button>
+            </div>
+        </div>
+
+
+
+    </div>
+</EditForm>
+
+@code {
+    string Mensaje = string.Empty;
+
+    [Inject]
+    private ProductosBLL productosBLL { get; set; }
+
+    [Parameter]
+    public int ProductoId { get; set; }
+
+    private Productos Producto = new Productos();
+    protected override void OnInitialized()
+    {
+        Limpiar();
+    }
+
+    public async void Buscar()
+    {
+
+        var registro = await productosBLL.Buscar(this.ProductoId);
+
+        if (registro != null)
+        {
+            this.Producto = registro;
+        }
+        else
+        {
+
+            Mensaje =("No pudo ser encontrado.");
+        }
+    }
+
+    private void Nuevo()
+    {
+        Limpiar();
+    }
+
+    private async void Guardar()
+    {
+        Producto.ProductoId = this.ProductoId;
+        if (await productosBLL.Guardar(Producto))
+        {
+            Mensaje = ("Guardado con existo");
+            Limpiar();
+        }
+        else
+        {
+            Mensaje = ("No pudo ser guardado.");
+        }
+    }
+
+    private async void Eliminar()
+    {
+        if (await productosBLL.Eliminar(this.ProductoId))
+        {
+            Mensaje = ("Eliminado con existo");
+            Limpiar();
+        }
+        else
+        {
+            Mensaje = ("No pudo ser eliminado.");
+        }
+    }
+
+    private void Limpiar()
+    {
+        this.Producto = new Productos();
+        this.ProductoId = 0;
+    }
+}

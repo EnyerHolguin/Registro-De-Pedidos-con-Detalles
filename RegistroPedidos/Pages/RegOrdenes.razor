@@ -1,0 +1,294 @@
+﻿@using RegistroPedidos.BLL;
+@using RegistroPedidos.Models;
+@page "/Ordenes"
+@page "/Ordenes/{OrdenId:int}"
+
+<EditForm Model="Orden" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <div class="card">
+        <div class="card-header">
+            <h3>Registro Ordenes</h3>
+        </div>
+        <div class="card-body">
+            <form>
+                <div class="form-row align-items-center">
+                    <div class="col">
+                        <div class="form-group">
+                            <label>Orden Id</label>
+                            <div class="input-group">
+                                <InputNumber @bind-Value="this.OrdenId" class="form-control col-3" />
+                                <div class="input-group-append">
+                                    <button type="button" style="z-index:0" class="btn btn-primary" @onclick="Buscar">Buscar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <InputDate @bind-Value="Orden.Fecha" class="form-control col-4" />
+                </div>
+
+                <div class="form-group">
+                    <label>Suplidor</label>
+                    <InputSelect @bind-Value="Orden.SuplidorId" class="form-control col-4">
+                        @foreach (var suplidores in listSuplidores)
+                        {
+                            <option value="@suplidores.SuplidorId">@suplidores.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="(() => Orden.SuplidorId)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Monto</label>
+                    <InputNumber @bind-Value="Orden.Monto" class="form-control col-4" readonly />
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info">
+            <h5 class="text-white">Orden Detalle</h5>
+        </div>
+        <div class="card-body">
+
+            <div class="col form-group">
+                <label>Costo</label>
+                <InputNumber @bind-Value="producto.Costo" class="form-control  col-4" readonly />
+
+            </div>
+
+            <div class="col form-group">
+                <label>Cantidad</label>
+                <input type="number" @bind="cantidad" class="form-control  col-4" id="CantidadInput" @oninput="@CalcularChanged" />
+
+            </div>
+
+            <div class="col form-group">
+                <label>Total</label>
+                <div class="input-group">
+                    <InputNumber @bind-Value="total" class="form-control col-4" readonly />
+                    <div class="input-group-append">
+                        <button type="button" class="btn btn-success" @onclick="Agregar">Agregar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive text-nowrap" style="position: relative; height:200px; overflow: auto; display: block;">
+            <table class="table table-striped">
+                <thead class="thead-light">
+                    <tr>
+                        <th>Descripción</th>
+                        <th>Costo</th>
+                        <th>Cantidad</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white">
+                    @foreach (var item in DetalleDTO)
+                    {
+                        <tr>
+                            <td>@item.Descripcion</td>
+                            <td>@item.Costo</td>
+                            <td>@item.Cantidad</td>
+                            <td>@item.total</td>
+                            <td><button type="button" class="btn btn-danger" @onclick="() => Remover((object)item)">Remover</button></td>
+
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <h3>@Mensaje</h3>
+
+        <div class="card-footer">
+            <div class="form-group text-center">
+                <div class="form-group text-center">
+                    <button type="button" class="btn btn-primary" @onclick="Nuevo">Nuevo</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                    <button type="button" class="btn btn-danger" @onclick="Eliminar">Eliminar</button>
+                </div>
+            </div>
+        </div>
+
+    </div> 
+</EditForm>
+
+@code {
+    string Mensaje = string.Empty;
+
+    [Inject]
+    public OrdenesBLL ordenesBLL { get; set; }
+    [Inject]
+    public ProductosBLL productosBLL { get; set; }
+    [Inject]
+    public SuplidoresBLL suplidoresBLL { get; set; }
+    [Parameter]
+    public int OrdenId { get; set; }
+    [Parameter]
+    public EventCallback<int> Cantidad { get; set; }
+
+    private int cantidad = 0;
+    private Ordenes Orden = new Ordenes();
+    private OrdenesDetalle detalle = new OrdenesDetalle();
+    private Productos producto = new Productos();
+    List<dynamic> DetalleDTO = new List<dynamic>();
+    private decimal total = 0;
+    List<Suplidores> listSuplidores = new List<Suplidores>();
+    List<Productos> listProductos = new List<Productos>();
+
+    protected async override Task OnInitializedAsync()
+    {
+
+        listSuplidores = await suplidoresBLL.GetSuplidores(p => true);
+    }
+
+    private async void Buscar()
+    {
+        var registro = await ordenesBLL.Buscar(this.OrdenId);
+        if (registro != null)
+        {
+            this.Orden = registro;
+            SourceDTO(registro.Detalle);
+        }
+        else
+        {
+            Mensaje = ("No Pudo ser Econtrado.");
+        }
+    }
+
+
+    private void Agregar()
+    {
+        cantidad = 0;
+        Orden.Monto += total;
+        detalle.Costo = producto.Costo;
+        Orden.Detalle.Add(detalle);
+
+        SourceDTO(detalle, producto);
+
+        total = 0;
+        detalle = new OrdenesDetalle();
+        producto = new Productos();
+
+    }
+
+    private void Remover(dynamic detalle)
+    {
+        Orden.Monto -= (detalle.Cantidad * detalle.Costo);
+
+        Orden.Detalle.RemoveAll(i => i.Id == detalle.Id);
+        DetalleDTO.Remove(detalle);
+    }
+
+    private void Nuevo()
+    {
+        Limpiar();
+    }
+
+    private async void Guardar()
+    {
+        if (!Validar()) { return; }
+
+        Orden.OrdenId = this.OrdenId;
+        if (await ordenesBLL.Guardar(Orden))
+        {
+            Mensaje = ("Guardado Eon Existo.");
+            Limpiar();
+        }
+        else
+        {
+            Mensaje = ("No Pudo ser guardado.");
+        }
+    }
+
+    private async void Eliminar()
+    {
+        if (await ordenesBLL.Eliminar(this.OrdenId))
+        {
+            Mensaje = ("Eliminado Con Existo.");
+            Limpiar();
+        }
+        else
+        {
+            Mensaje = ("No se logro eliminar el registro.");
+        }
+    }
+
+    private void Limpiar()
+    {
+        this.Orden = new Ordenes();
+        this.OrdenId = 0;
+        DetalleDTO = new List<dynamic>();
+    }
+
+
+
+    private void CalcularChanged(ChangeEventArgs args)
+    {
+        detalle.Cantidad = int.Parse(args.Value.ToString());
+        total = producto.Costo * detalle.Cantidad;
+    }
+
+
+
+    private async void SourceDTO(List<OrdenesDetalle> detalle)
+    {
+        foreach (var item in detalle)
+        {
+            var productos = await productosBLL.Buscar(item.OrdenId);
+
+            var dto = new
+            {
+                item.Id,
+                item.OrdenId,
+                productos.Descripcion,
+                productos.Costo,
+                item.Cantidad,
+                total
+            };
+
+            DetalleDTO.Add(dto);
+        }
+    }
+
+    private void SourceDTO(OrdenesDetalle detalle, Productos productos)
+    {
+        var dto = new
+        {
+            detalle.Id,
+            detalle.OrdenId,
+            detalle.Cantidad,
+            productos.Costo,
+
+
+
+            total
+        };
+
+        DetalleDTO.Add(dto);
+    }
+
+    private bool Validar()
+    {
+        if (!(Orden.SuplidorId >= 1))
+        {
+            Mensaje = ("Debe Selecionar un Suplidor.");
+            return false;
+        }
+
+        if (Orden.Detalle.Count == 0)
+        {
+            Mensaje = ("Agregue como minimo una orden al detalle.");
+            return false;
+        }
+
+        return true;
+    }
+}

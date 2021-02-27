@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RegistroPedidos", "RegistroPedidos\RegistroPedidos.csproj", "{9E7431D3-4076-477A-9AD8-5D70C1ABC190}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RegistroPedidos", "RegistroPedidos\RegistroPedidos.csproj", "{9E7431D3-4076-477A-9AD8-5D70C1ABC190}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
